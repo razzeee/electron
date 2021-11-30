@@ -110,6 +110,7 @@ async function getCircleCIWorkflowId (pipelineId) {
     switch (pipelineInfo.state) {
       case 'created': {
         const workflows = await circleCIRequest(`${pipelineInfoUrl}/workflow`, 'GET');
+        console.log('workflows: ', workflows);
         if (workflows.items.length === 1) {
           workflowId = workflows.items[0].id;
           break;
