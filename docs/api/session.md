@@ -1053,6 +1053,33 @@ session.fromPartition('some-partition').setPermissionRequestHandler((webContents
 })
 ```
 
+On Linux, applications can opt into Chromium's experimental PipeWire camera
+backend with `--enable-features=WebRtcPipeWireCamera`. In builds with PipeWire
+support, this uses the
+[XDG Camera portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Camera.html)
+to allow Flatpak applications to access cameras without granting `--device=all`.
+This requires a working host Camera portal and compatible PipeWire and session
+manager integration. The portal must also be able to identify the application;
+Flatpak packages should export a desktop entry matching their application and
+window identity.
+
+Portal permission is separate from Electron's `media` permission handlers.
+Applications opting in should account for these limitations:
+
+* Device enumeration, including `enumerateDevices()`, can request portal
+  permission before a camera capture request reaches Electron's permission
+  request handler.
+* Portal initialization errors can result in an empty camera list rather than
+  a fallback to direct device access. Initialization failures are cached for
+  the camera factory's lifetime, so repeating a request may not recover after
+  permissions or the portal setup change. Restart the application before retrying.
+* Photo capture and camera controls available through V4L2 are not fully
+  supported by the PipeWire backend.
+
+Without this opt-in, camera capture uses V4L2, which requires direct device
+access. Applications can explicitly disable the experimental backend with
+`--disable-features=WebRtcPipeWireCamera`.
+
 Both `media` and `display-capture` requests carry a
 [MediaAccessPermissionRequest](structures/media-access-permission-request.md) as
 `details`. A `media` request is for camera and/or microphone devices, while a
